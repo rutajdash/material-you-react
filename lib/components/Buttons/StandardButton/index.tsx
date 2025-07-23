@@ -25,6 +25,7 @@ import { InkWell } from '../../Interactions';
 import styles from './StandardButton.module.css';
 
 export default function StandardButton({
+  ref,
   mode,
   label,
   leadingIcon,
@@ -32,6 +33,7 @@ export default function StandardButton({
   isDisabled,
   className,
 }: {
+  ref?: React.Ref<HTMLDivElement>;
   mode: 'elevated' | 'filled' | 'filled-tonal' | 'outlined' | 'text';
   label: string;
   leadingIcon?: string;
@@ -92,6 +94,7 @@ export default function StandardButton({
 
   return (
     <InkWell
+      ref={ref}
       onTap={onTap}
       isDisabled={isDisabled}
       height='40px'

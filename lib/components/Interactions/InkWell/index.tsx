@@ -24,6 +24,7 @@ import { CSSProperties, HtmlHTMLAttributes, ReactNode, useMemo } from 'react';
 import styles from './InkWell.module.css';
 
 export default function InkWell({
+  ref,
   children,
 
   onTap,
@@ -43,6 +44,7 @@ export default function InkWell({
   className,
   props,
 }: {
+  ref?: React.Ref<HTMLDivElement>;
   children: ReactNode;
 
   onTap?: () => void;
@@ -98,10 +100,13 @@ export default function InkWell({
   );
 
   return (
-    <div className={styles.empty}>
+    <div
+      ref={ref}
+      className={`${styles.empty} ${className ?? ''}`}
+    >
       <style>{inkWellStyles}</style>
       <div
-        className={`${styles.root} ${isDisabled ? styles.disabled : ''} ${noBoundary ? styles.noBoundary : ''} ${className ?? ''}`}
+        className={`${styles.root} ${isDisabled ? styles.disabled : ''} ${noBoundary ? styles.noBoundary : ''}`}
         onMouseDown={
           !isDisabled
             ? (e) => {
