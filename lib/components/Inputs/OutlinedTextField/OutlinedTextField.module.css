@@ -20,7 +20,7 @@
 
 .root {
   height: 56px;
-  overflow: hidden;
+  /* overflow: hidden; */
 
   display: flex;
   flex-direction: row;
@@ -106,9 +106,8 @@
 
   &:focus-within .label > span,
   &:has(input:not(:placeholder-shown)) .label > span {
-    transform: translateX(-40px) translateY(-28px);
-    padding: 0px 4px;
-    background-color: var(--md-sys-color-surface-container);
+    transform: translateX(-8px) translateY(-28px);
+    padding: 0px 8px;
 
     font-size: 12px;
 

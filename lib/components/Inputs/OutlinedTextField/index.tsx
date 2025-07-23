@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/prefer-for-of */
 /**
  * @license
  * Material You React Package
@@ -20,13 +21,21 @@
 
 'use client';
 
-import React, { ChangeEvent, HTMLAttributes, MouseEventHandler } from 'react';
+import React, {
+  ChangeEvent,
+  HTMLAttributes,
+  MouseEventHandler,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import styles from './OutlinedTextField.module.css';
 
 // TODO: Add error message display and styling
 // TODO: Add tap to focus on root for input
 export default function OutlinedTextField({
   name,
+  type = 'text',
   label,
   placeholder,
   className,
@@ -40,6 +49,7 @@ export default function OutlinedTextField({
   inputProps,
 }: {
   name: string;
+  type: 'email' | 'number' | 'password' | 'text' | 'search' | 'tel' | 'url';
   label?: string;
   placeholder?: string;
   className?: string;
@@ -49,13 +59,22 @@ export default function OutlinedTextField({
   onEnterKey?: (value: string) => void;
   enterKeyHint?: HTMLAttributes<HTMLInputElement>['enterKeyHint'];
   handleInputChange?: (event: ChangeEvent<HTMLInputElement>) => void;
-  containerProps?: HTMLAttributes<HTMLDivElement>;
-  inputProps?: HTMLAttributes<HTMLInputElement>;
+  containerProps?: React.HTMLAttributes<HTMLDivElement>;
+  inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
 }): React.JSX.Element {
+  const rootElement = useRef<HTMLDivElement>(null);
+  const [backgroundColor, setBackgroundColor] = useState<string>('transparent');
+
+  useEffect(() => {
+    const bgColor = getUnderlyingBgColor(rootElement.current);
+    setBackgroundColor(bgColor);
+  }, [rootElement]);
+
   return (
     <div
       className={`${styles.root} ${!label ? styles.noLabel : ''} ${className}`}
       {...containerProps}
+      ref={rootElement}
     >
       {leadingIcon && (
         <span className={`${styles.leadingIcon} material-symbols-outlined`}>
@@ -65,11 +84,12 @@ export default function OutlinedTextField({
       <div className={styles.inputContainer}>
         {label && (
           <label className={styles.label}>
-            <span>{label}</span>
+            <span style={{ backgroundColor }}>{label}</span>
           </label>
         )}
         <input
           name={name}
+          type={type}
           aria-label={label}
           title={label}
           placeholder={!label && placeholder ? placeholder : ''}
@@ -94,4 +114,89 @@ export default function OutlinedTextField({
       )}
     </div>
   );
+}
+
+function getUnderlyingBgColor(element: Element | null): string {
+  if (!element?.tagName) {
+    return 'transparent';
+  }
+
+  const classData = element.classList
+    .values()
+    .toArray()
+    .map((cls) => cls.trim())
+    .map((cls) => getCSSProperties(cls))
+    .reduce(
+      (acc, properties) => {
+        for (const [key, value] of Object.entries(properties)) {
+          if (!acc[key]) {
+            acc[key] = value;
+          }
+        }
+        return acc;
+      },
+      {} as Record<string, string>,
+    );
+
+  const bgColor =
+    Object.keys(classData).includes('background-color') &&
+    classData['background-color'] &&
+    classData['background-color'] !== 'transparent' &&
+    classData['background-color'];
+
+  if (bgColor) {
+    return classData['background-color'];
+  }
+
+  return getUnderlyingBgColor(element.parentNode as Element | null);
+}
+
+function getCSSProperties(className: string) {
+  const properties: Record<string, string> = {};
+  const targetSelector = `.${className}`;
+
+  for (const sheet of document.styleSheets) {
+    try {
+      for (const rule of sheet.cssRules) {
+        if (rule instanceof CSSStyleRule) {
+          if (rule.selectorText === targetSelector) {
+            const style = rule.style;
+
+            for (let i = 0; i < style.length; i++) {
+              const propName: string = style[i];
+              const propValue = style.getPropertyValue(propName);
+              properties[propName] = propValue;
+            }
+          }
+        } else if (rule instanceof CSSMediaRule) {
+          for (const mediaRule of rule.cssRules) {
+            if (
+              mediaRule instanceof CSSStyleRule &&
+              mediaRule.selectorText === targetSelector
+            ) {
+              const style = mediaRule.style;
+              for (let i = 0; i < style.length; i++) {
+                const propName: string = style[i];
+                const propValue = style.getPropertyValue(propName);
+                properties[propName] = propValue;
+              }
+            }
+          }
+        }
+      }
+    } catch (e) {
+      if ((e as Error).name === 'SecurityError') {
+        console.warn(
+          `SecurityError: Cannot access rules from cross-origin stylesheet: ${sheet.href}`,
+        );
+      } else {
+        console.error(
+          `Error processing stylesheet ${sheet.href || 'inline'}:`,
+          e,
+        );
+      }
+    }
+  }
+
+  return properties;
 }
